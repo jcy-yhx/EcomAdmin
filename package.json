@@ -1,0 +1,31 @@
+{
+  "name": "ecom-admin",
+  "private": true,
+  "scripts": {
+    "dev:server": "pnpm --filter @ecom/server start:dev",
+    "dev:admin": "pnpm --filter @ecom/admin dev",
+    "dev:storefront": "pnpm --filter @ecom/storefront dev",
+    "build:server": "pnpm --filter @ecom/server build",
+    "build:admin": "pnpm --filter @ecom/admin build",
+    "build:storefront": "pnpm --filter @ecom/storefront build",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.5",
+    "typescript-eslint": "^8.63.0"
+  }
+}

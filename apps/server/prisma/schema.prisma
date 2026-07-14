@@ -1,0 +1,12 @@
+// Prisma schema for EcomAdmin — Phase 1 foundation
+// Full models will be added in later phases as each module is built
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
