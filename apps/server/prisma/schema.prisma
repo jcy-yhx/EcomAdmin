@@ -1,5 +1,6 @@
 // Prisma schema for EcomAdmin
 // Phase 2: Users, Roles, Permissions (RBAC)
+// Phase 3: Category, Brand, Product, Spec, SKU, ProductImage
 
 generator client {
   provider = "prisma-client"
@@ -97,4 +98,133 @@ model RolePermission {
 
   @@id([roleId, permissionId])
   @@map("role_permissions")
+}
+
+// ──── Product Management ────
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  icon      String?
+  image     String?
+  sortOrder Int       @default(0)
+  parentId  Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  logo      String?
+  website   String?
+  sortOrder Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  status      String    @default("draft") // draft | on_sale | off_sale
+
+  categoryId  Int?
+  brandId     Int?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  category    Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brand       Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  skus        Sku[]
+  images      ProductImage[]
+
+  @@map("products")
+}
+
+model Spec {
+  id        Int       @id @default(autoincrement())
+  name      String
+  sortOrder Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  values   SpecValue[]
+  skuSpecs SkuSpec[]
+
+  @@map("specs")
+}
+
+model SpecValue {
+  id     Int    @id @default(autoincrement())
+  value  String
+  specId Int
+  sortOrder Int @default(0)
+
+  spec     Spec      @relation(fields: [specId], references: [id], onDelete: Cascade)
+  skuSpecs SkuSpec[]
+
+  @@map("spec_values")
+}
+
+model Sku {
+  id        Int            @id @default(autoincrement())
+  productId Int
+  skuCode   String         @unique
+  price     Decimal        @db.Decimal(10, 2)
+  stock     Int            @default(0)
+  image     String?
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  skuSpecs  SkuSpec[]
+
+  @@map("skus")
+}
+
+model SkuSpec {
+  id         Int @id @default(autoincrement())
+  skuId      Int
+  specId     Int
+  specValueId Int
+
+  sku       Sku       @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  spec      Spec      @relation(fields: [specId], references: [id], onDelete: Cascade)
+  specValue SpecValue @relation(fields: [specValueId], references: [id], onDelete: Cascade)
+
+  @@unique([skuId, specId])
+  @@map("sku_specs")
+}
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
 }

@@ -10,6 +10,12 @@ import { HealthModule } from './modules/health/health.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
+import { CategoryModule } from './modules/category/category.module';
+import { BrandModule } from './modules/brand/brand.module';
+import { SpecModule } from './modules/spec/spec.module';
+import { ProductModule } from './modules/product/product.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
@@ -17,19 +23,11 @@ import { PermissionsGuard } from './modules/rbac/guards/permissions.guard';
 
 @Module({
   imports: [
-    // Global env configuration
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
 
-    // i18n — detect language from Accept-Language header or query ?lang=zh
     I18nModule.forRoot({
       fallbackLanguage: 'zh',
-      loaderOptions: {
-        path: path.join(__dirname, '..', 'i18n'),
-        watch: true,
-      },
+      loaderOptions: { path: path.join(__dirname, '..', 'i18n'), watch: true },
       resolvers: [new HeaderResolver(['accept-language'])],
     }),
 
@@ -37,14 +35,21 @@ import { PermissionsGuard } from './modules/rbac/guards/permissions.guard';
     PrismaModule,
     RedisModule,
 
-    // Business modules
+    // Business modules — Phase 2
     HealthModule,
     UserModule,
     AuthModule,
     RbacModule,
+
+    // Business modules — Phase 3
+    CategoryModule,
+    BrandModule,
+    SpecModule,
+    ProductModule,
+    InventoryModule,
+    UploadModule,
   ],
   providers: [
-    // Global auth guards (applied to all routes, @Public() to bypass)
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
@@ -108,6 +109,110 @@ async function main() {
     create: { userId: superUser.id, roleId: superAdminRole.id },
   });
   console.log('  ✓ Assigned super_admin role to admin user');
+
+  // ──── Phase 3: Product Seed Data ────
+
+  // Categories
+  const catElectronics = await prisma.category.create({
+    data: { name: '电子产品', slug: 'electronics', sortOrder: 1 },
+  });
+  const catPhones = await prisma.category.create({
+    data: { name: '手机', slug: 'phones', parentId: catElectronics.id, sortOrder: 1 },
+  });
+  const catLaptops = await prisma.category.create({
+    data: { name: '笔记本电脑', slug: 'laptops', parentId: catElectronics.id, sortOrder: 2 },
+  });
+  const catClothing = await prisma.category.create({
+    data: { name: '服装', slug: 'clothing', sortOrder: 2 },
+  });
+  console.log('  ✓ Created 4 categories (2-level tree)');
+
+  // Brands
+  const brandApple = await prisma.brand.create({ data: { name: 'Apple', website: 'https://apple.com', sortOrder: 1 } });
+  const brandSamsung = await prisma.brand.create({
+    data: { name: 'Samsung', website: 'https://samsung.com', sortOrder: 2 },
+  });
+  console.log('  ✓ Created 2 brands');
+
+  // Specs
+  const specColor = await prisma.spec.create({ data: { name: '颜色', sortOrder: 1 } });
+  const specStorage = await prisma.spec.create({ data: { name: '存储容量', sortOrder: 2 } });
+  const colorRed = await prisma.specValue.create({ data: { value: '红色', specId: specColor.id, sortOrder: 1 } });
+  const colorBlue = await prisma.specValue.create({ data: { value: '蓝色', specId: specColor.id, sortOrder: 2 } });
+  const colorBlack = await prisma.specValue.create({ data: { value: '黑色', specId: specColor.id, sortOrder: 3 } });
+  const storage128 = await prisma.specValue.create({ data: { value: '128GB', specId: specStorage.id, sortOrder: 1 } });
+  const storage256 = await prisma.specValue.create({ data: { value: '256GB', specId: specStorage.id, sortOrder: 2 } });
+  const storage512 = await prisma.specValue.create({ data: { value: '512GB', specId: specStorage.id, sortOrder: 3 } });
+  console.log('  ✓ Created 2 specs with values');
+
+  // Products with SKUs
+  const product = await prisma.product.create({
+    data: {
+      name: 'iPhone 15 Pro',
+      slug: 'iphone-15-pro',
+      description: 'Apple iPhone 15 Pro — A17 Pro chip, Titanium design',
+      status: 'on_sale',
+      categoryId: catPhones.id,
+      brandId: brandApple.id,
+      images: {
+        create: [
+          { url: '/uploads/iphone15pro-1.jpg', sortOrder: 0 },
+          { url: '/uploads/iphone15pro-2.jpg', sortOrder: 1 },
+        ],
+      },
+      skus: {
+        create: [
+          {
+            skuCode: 'IP15P-BLACK-128G',
+            price: 6999.0,
+            stock: 100,
+            skuSpecs: {
+              create: [
+                { specId: specColor.id, specValueId: colorBlack.id },
+                { specId: specStorage.id, specValueId: storage128.id },
+              ],
+            },
+          },
+          {
+            skuCode: 'IP15P-BLACK-256G',
+            price: 7999.0,
+            stock: 50,
+            skuSpecs: {
+              create: [
+                { specId: specColor.id, specValueId: colorBlack.id },
+                { specId: specStorage.id, specValueId: storage256.id },
+              ],
+            },
+          },
+          {
+            skuCode: 'IP15P-BLUE-128G',
+            price: 6999.0,
+            stock: 80,
+            skuSpecs: {
+              create: [
+                { specId: specColor.id, specValueId: colorBlue.id },
+                { specId: specStorage.id, specValueId: storage128.id },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
+  console.log(`  ✓ Created product: ${product.name} (3 SKUs)`);
+
+  // A draft product
+  await prisma.product.create({
+    data: {
+      name: 'Samsung Galaxy S24',
+      slug: 'samsung-galaxy-s24',
+      description: 'Samsung flagship with Galaxy AI',
+      status: 'draft',
+      categoryId: catPhones.id,
+      brandId: brandSamsung.id,
+    },
+  });
+  console.log('  ✓ Created draft product: Samsung Galaxy S24');
 
   console.log('\n✅ Seed complete!');
 }
