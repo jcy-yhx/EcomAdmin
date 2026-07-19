@@ -19,6 +19,10 @@ import { UploadModule } from './modules/upload/upload.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { OrderQueueModule } from './modules/order/order-queue.module';
+import { CouponModule } from './modules/coupon/coupon.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { OperationLogModule } from './modules/operation-log/operation-log.module';
 
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
@@ -56,6 +60,12 @@ import { PermissionsGuard } from './modules/rbac/guards/permissions.guard';
     CartModule,
     OrderModule,
     OrderQueueModule,
+
+    // Business modules — Phase 5
+    CouponModule,
+    PaymentModule,
+    NotificationModule,
+    OperationLogModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

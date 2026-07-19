@@ -28,6 +28,7 @@ model User {
   userRoles  UserRole[]
   refreshTokens RefreshToken[]
   orders     Order[]
+  userCoupons UserCoupon[]
 
   @@map("users")
 }
@@ -247,6 +248,7 @@ model Order {
   user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   items       OrderItem[]
   address     OrderAddress?
+  couponUsage UserCoupon[]
 
   @@map("orders")
 }
@@ -281,4 +283,77 @@ model OrderAddress {
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_addresses")
+}
+
+// ──── Coupon ────
+
+model Coupon {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String   @unique
+  type        String   // fixed | percentage
+  value       Decimal  @db.Decimal(10, 2)
+  minAmount   Decimal  @db.Decimal(10, 2) @default(0)
+  totalCount  Int
+  usedCount   Int      @default(0)
+  startAt     DateTime
+  endAt       DateTime
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  userCoupons UserCoupon[]
+
+  @@map("coupons")
+}
+
+model UserCoupon {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  couponId  Int
+  isUsed    Boolean   @default(false)
+  usedAt    DateTime?
+  orderId   Int?
+
+  createdAt DateTime  @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@map("user_coupons")
+}
+
+// ──── Notification ────
+
+model Notification {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String
+  type      String  @default("system") // system | order | promotion
+  isRead    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+// ──── Operation Log ────
+
+model OperationLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  username   String?
+  module     String
+  action     String
+  detail     String?
+  ip         String?
+  userAgent  String?
+
+  createdAt  DateTime  @default(now())
+
+  @@map("operation_logs")
 }
