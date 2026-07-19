@@ -16,6 +16,9 @@ import { SpecModule } from './modules/spec/spec.module';
 import { ProductModule } from './modules/product/product.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { CartModule } from './modules/cart/cart.module';
+import { OrderModule } from './modules/order/order.module';
+import { OrderQueueModule } from './modules/order/order-queue.module';
 
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
@@ -48,6 +51,11 @@ import { PermissionsGuard } from './modules/rbac/guards/permissions.guard';
     ProductModule,
     InventoryModule,
     UploadModule,
+
+    // Business modules — Phase 4
+    CartModule,
+    OrderModule,
+    OrderQueueModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
