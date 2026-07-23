@@ -27,7 +27,7 @@ export class AuthService {
     }
 
     const user = await this.userService.create(dto);
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, [], []);
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     return { user, ...tokens };
@@ -45,7 +45,11 @@ export class AuthService {
       throw new UnauthorizedException('邮箱或密码错误');
     }
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const roles = user.userRoles.map((ur) => ur.role.code);
+    const permissions = [
+      ...new Set(user.userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.code))),
+    ];
+    const tokens = await this.generateTokens(user.id, user.email, roles, permissions);
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     const { password, ...userWithoutPwd } = user;
@@ -80,7 +84,13 @@ export class AuthService {
     // Invalidate old token, issue new pair
     await this.invalidateRefreshToken(refreshToken, payload.sub);
 
-    const tokens = await this.generateTokens(payload.sub, payload.email);
+    // Re-query user to get latest roles/permissions
+    const user = await this.userService.findById(payload.sub);
+    const roles = user.userRoles.map((ur) => ur.role.code);
+    const permissions = [
+      ...new Set(user.userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.code))),
+    ];
+    const tokens = await this.generateTokens(payload.sub, payload.email, roles, permissions);
     await this.storeRefreshToken(payload.sub, tokens.refreshToken);
 
     return tokens;
@@ -97,13 +107,13 @@ export class AuthService {
   }
 
   /** Generate access + refresh token pair */
-  private async generateTokens(userId: number, email: string) {
+  private async generateTokens(userId: number, email: string, roles: string[] = [], permissions: string[] = []) {
     const accessExpiresIn = 15 * 60; // 15 minutes
     const refreshExpiresIn = 7 * 24 * 60 * 60; // 7 days
 
     const [accessToken, refreshTokenValue] = await Promise.all([
       this.jwtService.signAsync(
-        { sub: userId, email, type: 'access' },
+        { sub: userId, email, type: 'access', roles, permissions },
         {
           secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
           expiresIn: accessExpiresIn,
