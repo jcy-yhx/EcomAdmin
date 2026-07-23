@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import * as path from 'path';
 
@@ -38,6 +39,18 @@ import { PermissionsGuard } from './modules/rbac/guards/permissions.guard';
       resolvers: [new HeaderResolver(['accept-language'])],
     }),
 
+    // Rate Limiting (Phase 8)
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('THROTTLE_TTL', 60) * 1000, // ms
+          limit: config.get<number>('THROTTLE_LIMIT', 100),
+        },
+      ],
+    }),
+
     // Global database & cache
     PrismaModule,
     RedisModule,
@@ -68,6 +81,7 @@ import { PermissionsGuard } from './modules/rbac/guards/permissions.guard';
     OperationLogModule,
   ],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },

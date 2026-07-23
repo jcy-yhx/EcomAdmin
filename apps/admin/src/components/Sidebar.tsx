@@ -9,6 +9,8 @@ import {
   UserOutlined,
   GiftOutlined,
   FileTextOutlined,
+  AppstoreOutlined,
+  TagOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/lib/auth';
 
@@ -17,6 +19,8 @@ const { Sider } = Layout;
 const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: '仪表盘' },
   { key: '/products', icon: <ShoppingOutlined />, label: '商品管理', permission: 'product:read' },
+  { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理', permission: 'product:manage' },
+  { key: '/brands', icon: <TagOutlined />, label: '品牌管理', permission: 'product:manage' },
   { key: '/orders', icon: <OrderedListOutlined />, label: '订单管理', permission: 'order:read' },
   { key: '/users', icon: <UserOutlined />, label: '用户管理', permission: 'user:read' },
   { key: '/coupons', icon: <GiftOutlined />, label: '优惠券管理', permission: 'coupon:manage' },

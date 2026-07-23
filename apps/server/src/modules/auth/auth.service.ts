@@ -33,7 +33,7 @@ export class AuthService {
     return { user, ...tokens };
   }
 
-  /** Login: validate credentials → issue tokens */
+  /** Login: validate credentials → issue tokens (for storefront/customers) */
   async login(dto: LoginDto) {
     const user = await this.userService.findByEmail(dto.email);
     if (!user || user.deletedAt) {
@@ -46,6 +46,33 @@ export class AuthService {
     }
 
     const roles = user.userRoles.map((ur) => ur.role.code);
+    const permissions = [
+      ...new Set(user.userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.code))),
+    ];
+    const tokens = await this.generateTokens(user.id, user.email, roles, permissions);
+    await this.storeRefreshToken(user.id, tokens.refreshToken);
+
+    const { password, ...userWithoutPwd } = user;
+    return { user: userWithoutPwd, ...tokens };
+  }
+
+  /** Admin login: only users with at least one admin role can log in to the admin panel */
+  async adminLogin(dto: LoginDto) {
+    const user = await this.userService.findByEmail(dto.email);
+    if (!user || user.deletedAt) {
+      throw new UnauthorizedException('邮箱或密码错误');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('邮箱或密码错误');
+    }
+
+    const roles = user.userRoles.map((ur) => ur.role.code);
+    if (roles.length === 0) {
+      throw new UnauthorizedException('无权访问管理后台，非管理员账号');
+    }
+
     const permissions = [
       ...new Set(user.userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.code))),
     ];

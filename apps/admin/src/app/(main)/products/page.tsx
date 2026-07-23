@@ -6,12 +6,14 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 import { message } from 'antd';
+import CategorySelect from '@/components/CategorySelect';
+import BrandSelect from '@/components/BrandSelect';
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
 
@@ -21,11 +23,35 @@ export default function ProductsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (values: any) => (editing ? apiPatch(`/products/${editing.id}`, values) : apiPost('/products', values)),
-    onSuccess: () => {
+    mutationFn: ({ editingId: _eid, ...values }: any) => {
+      const data: any = {
+        name: values.name,
+        slug: values.slug,
+        description: values.description || undefined,
+        status: values.status,
+        categoryId: values.categoryId || undefined,
+        brandId: values.brandId || undefined,
+      };
+      // Create SKU from price/stock if provided (new product or update)
+      if (values.price != null && values.price > 0) {
+        data.skus = [
+          {
+            skuCode: values.skuCode || values.slug,
+            price: values.price,
+            stock: values.stock || 0,
+          },
+        ];
+      }
+      return _eid ? apiPatch(`/products/${_eid}`, data) : apiPost('/products', data);
+    },
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setModalOpen(false);
-      message.success(editing ? '已更新' : '已创建');
+      message.success(variables.editingId ? '已更新' : '已创建');
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || err?.message || '操作失败';
+      message.error(Array.isArray(msg) ? msg.join(', ') : msg);
     },
   });
 
@@ -38,14 +64,25 @@ export default function ProductsPage() {
   });
 
   const openCreate = () => {
-    setEditing(null);
+    setEditingId(null);
     form.resetFields();
     form.setFieldsValue({ status: 'draft' });
     setModalOpen(true);
   };
   const openEdit = (record: any) => {
-    setEditing(record);
-    form.setFieldsValue(record);
+    setEditingId(record.id);
+    const firstSku = record.skus?.[0];
+    form.setFieldsValue({
+      name: record.name,
+      slug: record.slug,
+      description: record.description,
+      status: record.status,
+      categoryId: record.categoryId,
+      brandId: record.brandId,
+      skuCode: firstSku?.skuCode || undefined,
+      price: firstSku ? Number(firstSku.price) : undefined,
+      stock: firstSku?.stock ?? undefined,
+    });
     setModalOpen(true);
   };
 
@@ -78,6 +115,15 @@ export default function ProductsPage() {
           { title: '品牌', key: 'brand', render: (_: any, r: any) => r.brand?.name || '-' },
           { title: '分类', key: 'category', render: (_: any, r: any) => r.category?.name || '-' },
           {
+            title: '价格',
+            key: 'price',
+            render: (_: any, r: any) => {
+              const p = r.skus?.[0]?.price;
+              return p ? `¥${Number(p).toFixed(2)}` : '-';
+            },
+          },
+          { title: '库存', key: 'stock', render: (_: any, r: any) => r.skus?.[0]?.stock ?? '-' },
+          {
             title: '操作',
             key: 'actions',
             render: (_: any, r: any) => (
@@ -94,13 +140,13 @@ export default function ProductsPage() {
         ]}
       />
       <Modal
-        title={editing ? '编辑商品' : '新建商品'}
+        title={editingId ? '编辑商品' : '新建商品'}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={saveMutation.isPending}
       >
-        <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate(v)}>
+        <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate({ editingId, ...v })}>
           <Form.Item name="name" label="名称" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
@@ -119,11 +165,20 @@ export default function ProductsPage() {
               ]}
             />
           </Form.Item>
-          <Form.Item name="categoryId" label="分类ID">
-            <InputNumber />
+          <Form.Item name="categoryId" label="分类">
+            <CategorySelect />
           </Form.Item>
-          <Form.Item name="brandId" label="品牌ID">
-            <InputNumber />
+          <Form.Item name="brandId" label="品牌">
+            <BrandSelect />
+          </Form.Item>
+          <Form.Item name="skuCode" label="SKU 编码" tooltip="留空则自动使用别名">
+            <Input placeholder="如 IP15P-BLACK-128G" />
+          </Form.Item>
+          <Form.Item name="price" label="价格 (¥)" rules={[{ required: true, message: '请输入价格' }]}>
+            <InputNumber min={0.01} step={0.01} precision={2} style={{ width: '100%' }} placeholder="0.00" />
+          </Form.Item>
+          <Form.Item name="stock" label="库存">
+            <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
           </Form.Item>
         </Form>
       </Modal>

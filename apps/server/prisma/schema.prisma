@@ -1,6 +1,4 @@
-// Prisma schema for EcomAdmin
-// Phase 2: Users, Roles, Permissions (RBAC)
-// Phase 3: Category, Brand, Product, Spec, SKU, ProductImage
+// Prisma schema for EcomAdmin — Phase 8: optimized with indexes
 
 generator client {
   provider = "prisma-client"
@@ -30,6 +28,8 @@ model User {
   orders     Order[]
   userCoupons UserCoupon[]
 
+  @@index([deletedAt])
+  @@index([email])
   @@map("users")
 }
 
@@ -159,6 +159,10 @@ model Product {
   skus        Sku[]
   images      ProductImage[]
 
+  @@index([status])
+  @@index([deletedAt])
+  @@index([categoryId])
+  @@index([slug])
   @@map("products")
 }
 
@@ -250,6 +254,10 @@ model Order {
   address     OrderAddress?
   couponUsage UserCoupon[]
 
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([orderNo])
   @@map("orders")
 }
 

@@ -20,9 +20,16 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @ApiOperation({ summary: '用户登录' })
+  @ApiOperation({ summary: '用户登录（Storefront）' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Post('admin/login')
+  @ApiOperation({ summary: '管理员登录（Admin Panel）— 仅限有角色的用户' })
+  adminLogin(@Body() dto: LoginDto) {
+    return this.authService.adminLogin(dto);
   }
 
   @Public()
