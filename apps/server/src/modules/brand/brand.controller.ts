@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
 import { BrandService } from './brand.service';
 import { CreateBrandDto, UpdateBrandDto } from './dto/brand.dto';
 
@@ -15,12 +16,14 @@ export class BrandController {
     return this.brandService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiOperation({ summary: '品牌列表' })
+  @ApiOperation({ summary: '品牌列表 — 公开' })
   findAll(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.brandService.findAll(page, pageSize);
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: '品牌详情' })
   findOne(@Param('id', ParseIntPipe) id: number) {

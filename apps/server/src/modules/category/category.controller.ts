@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto, UpdateCategoryDto, QueryCategoryDto } from './dto/category.dto';
 
@@ -15,18 +16,21 @@ export class CategoryController {
     return this.categoryService.create(dto);
   }
 
+  @Public()
   @Get('tree')
-  @ApiOperation({ summary: '获取分类树' })
+  @ApiOperation({ summary: '获取分类树 — 公开' })
   findTree() {
     return this.categoryService.findTree();
   }
 
+  @Public()
   @Get()
-  @ApiOperation({ summary: '分类列表（分页）' })
+  @ApiOperation({ summary: '分类列表（分页）— 公开' })
   findAll(@Query() query: QueryCategoryDto) {
     return this.categoryService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: '分类详情' })
   findOne(@Param('id', ParseIntPipe) id: number) {

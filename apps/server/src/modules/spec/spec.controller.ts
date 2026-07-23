@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
 import { SpecService } from './spec.service';
 import { CreateSpecDto, UpdateSpecDto } from './dto/spec.dto';
 
@@ -15,12 +16,14 @@ export class SpecController {
     return this.specService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiOperation({ summary: '规格列表（含规格值）' })
+  @ApiOperation({ summary: '规格列表（含规格值）— 公开' })
   findAll() {
     return this.specService.findAll();
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: '规格详情' })
   findOne(@Param('id', ParseIntPipe) id: number) {
